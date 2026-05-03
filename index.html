@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <title>KevTify</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <!-- Force dark bg before React mounts — prevents white flash -->
+
+  <style>
+    html, body { background: #0e0e0e !important; color: #e8e8e8 !important; }
+    #root { min-height: 100vh; background: #0e0e0e; }
+    #pre-load {
+      position: fixed; inset: 0; background: #0e0e0e;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+      z-index: 9999;
+    }
+    #pre-load .pl-logo {
+      font-family: Arial Black, sans-serif; font-size: 38px;
+      font-weight: 900; color: #38bdf8; letter-spacing: 0.06em;
+    }
+    #pre-load .pl-tagline {
+      font-family: monospace; font-size: 11px; color: #5e5e5e;
+      letter-spacing: 0.18em; text-transform: uppercase;
+    }
+    #pre-load .pl-bar  { width: 140px; height: 2px; background: #1e1e1e; border-radius: 1px; overflow: hidden; }
+    #pre-load .pl-fill { height: 100%; background: #38bdf8; animation: pl 1.2s ease-in-out infinite; }
+    @keyframes pl { 0%{width:0%;margin-left:0%} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
+  </style>
+
+  <style>
+    :root {
+      --bg:#0e0e0e; --s1:#161616; --s2:#1e1e1e; --s3:#272727; --s4:#333; --s5:#444;
+      --go:#22c55e; --go-bg:#052010; --go-b:#166534;
+      --mb:#f59e0b; --mb-bg:#1c1204; --mb-b:#92400e;
+      --ng:#ef4444; --ng-bg:#1c0404; --ng-b:#991b1b;
+      --acc:#38bdf8; --acc-bg:#0c1f2e;
+      --txt:#e8e8e8; --txt2:#a0a0a0; --txt3:#5e5e5e;
+      --mono:"DM Mono",monospace; --head:"Rajdhani",sans-serif; --sans:"DM Sans",sans-serif;
+      --r:12px; --rsm:8px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:16px;-webkit-text-size-adjust:100%;background:var(--bg);}
+    body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100vh;min-height:-webkit-fill-available;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+
+    .topbar{position:sticky;top:0;z-index:100;background:var(--s1);border-bottom:1px solid var(--s3);display:flex;align-items:center;padding:0 16px;gap:12px;height:calc(56px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);}
+    .t-avatar{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid var(--acc);flex-shrink:0;}
+    .t-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+    .t-name{font-family:var(--head);font-size:22px;font-weight:700;letter-spacing:.03em;flex:1;}
+    .t-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:.06em;}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:var(--go);box-shadow:0 0 6px var(--go);animation:blink 2.5s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+    .main{padding:16px 16px 100px;max-width:540px;margin:0 auto;scroll-padding-bottom:120px;}
+
+    .card{background:var(--s1);border:1px solid var(--s3);border-radius:var(--r);overflow:hidden;margin-bottom:10px;}
+    .card-hdr{padding:11px 16px;border-bottom:1px solid var(--s3);background:var(--s2);display:flex;align-items:center;justify-content:space-between;}
+    .hdr-left{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--txt3);text-transform:uppercase;}
+    .hdr-dot{width:5px;height:5px;border-radius:50%;background:var(--acc);flex-shrink:0;}
+    .hdr-right{font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:.05em;}
+
+    /* INSTALL BANNER */
+    .install-banner{display:flex;align-items:center;gap:12px;background:var(--acc-bg);border:1px solid #1a4060;border-radius:var(--r);padding:12px 16px;margin-bottom:10px;}
+    .install-text{flex:1;font-size:13px;color:var(--txt2);line-height:1.5;}
+    .install-text strong{color:var(--acc);font-weight:600;}
+    .install-dismiss{font-family:var(--mono);font-size:18px;color:var(--txt3);cursor:pointer;padding:4px;-webkit-tap-highlight-color:transparent;flex-shrink:0;}
+
+    /* MODE TOGGLE */
+    .mode-toggle{display:flex;background:var(--s2);border:1px solid var(--s3);border-radius:10px;padding:4px;margin-bottom:12px;gap:4px;}
+    .mode-btn{flex:1;padding:10px 8px;border:none;border-radius:7px;font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:all .18s;background:transparent;color:var(--txt3);-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .mode-btn.active-flip{background:var(--acc);color:#000;box-shadow:0 2px 10px #38bdf830;}
+    .mode-btn.active-buy{background:var(--go);color:#000;box-shadow:0 2px 10px #22c55e30;}
+    .mode-btn:not(.active-flip):not(.active-buy):active{background:var(--s3);color:var(--txt2);}
+
+    /* CONTEXT */
+    .context-wrap{margin-bottom:10px;position:relative;}
+    .context-input{width:100%;background:var(--s1);border:1px solid var(--s3);border-radius:var(--r);padding:12px 16px;padding-bottom:28px;color:var(--txt);font-family:var(--sans);font-size:16px;outline:none;resize:none;line-height:1.5;-webkit-appearance:none;}
+    .context-input::placeholder{color:var(--txt3);}
+    .context-input:focus{border-color:var(--s5);}
+    .context-count{position:absolute;bottom:8px;right:12px;font-family:var(--mono);font-size:9px;color:var(--txt3);letter-spacing:.06em;pointer-events:none;}
+    .context-count.warn{color:var(--mb);}
+
+    /* UPLOAD */
+    .upload-tap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 20px;min-height:200px;cursor:pointer;position:relative;background:var(--bg);-webkit-tap-highlight-color:transparent;transition:background .15s;}
+    .upload-tap:active{background:var(--acc-bg);}
+    .upload-tap input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .up-icon{width:60px;height:60px;background:var(--s2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;}
+    .up-label{font-size:17px;font-weight:600;color:var(--txt);}
+    .up-sub{font-family:var(--mono);font-size:11px;color:var(--txt3);letter-spacing:.06em;}
+    .fmt-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+    .fmt-chip{font-family:var(--mono);font-size:9px;color:var(--txt3);border:1px solid var(--s4);padding:3px 8px;border-radius:4px;letter-spacing:.06em;background:var(--s2);}
+
+    /* PROCESSING OVERLAY on upload */
+    .processing-overlay{position:relative;background:#000;}
+    .processing-overlay-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.12em;}
+
+    /* PREVIEW */
+    .preview-wrap{position:relative;background:#000;}
+    .preview-img{width:100%;max-height:280px;object-fit:contain;display:block;}
+    .preview-pill{position:absolute;bottom:10px;left:10px;background:rgba(14,14,14,.9);border:1px solid var(--s4);border-radius:20px;font-family:var(--mono);font-size:9px;color:var(--go);padding:4px 12px;letter-spacing:.1em;display:flex;align-items:center;gap:6px;}
+    .preview-pill::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--go);}
+    .remove-x{position:absolute;top:10px;right:10px;width:34px;height:34px;background:rgba(14,14,14,.9);border:1px solid var(--s4);border-radius:8px;color:var(--txt3);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+
+    /* RESULT THUMB */
+    .result-thumb{width:100%;border-radius:var(--r);overflow:hidden;border:1px solid var(--s3);margin-bottom:10px;background:var(--s1);display:flex;align-items:center;padding:10px 14px;gap:12px;}
+    .result-thumb img{width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;}
+    .result-thumb-info{flex:1;min-width:0;}
+    .result-thumb-item{font-family:var(--head);font-size:16px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .result-thumb-mode{font-family:var(--mono);font-size:9px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+    .rescan-btn{font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:.08em;background:var(--s3);border:1px solid var(--s4);border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent;text-transform:uppercase;}
+
+    /* ANALYZE BTN */
+    .analyze-btn{width:100%;min-height:58px;color:#000;font-family:var(--head);font-weight:700;font-size:21px;letter-spacing:.06em;text-transform:uppercase;border:none;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;-webkit-tap-highlight-color:transparent;transition:opacity .15s,transform .1s;}
+    .analyze-btn.flip-btn{background:var(--acc);}
+    .analyze-btn.buy-btn{background:var(--go);}
+    .analyze-btn:active:not(:disabled){opacity:.82;transform:scale(.99);}
+    .analyze-btn:disabled{background:var(--s3)!important;color:var(--txt3);}
+
+    /* LOADING */
+    .loading-card{background:var(--s1);border:1px solid var(--s3);border-radius:var(--r);padding:18px 20px;margin-bottom:10px;}
+    .loading-track{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:10px;}
+    .loading-fill{height:100%;background:linear-gradient(90deg,var(--acc-bg),var(--acc));border-radius:2px;animation:sweep 1.4s ease-in-out infinite;}
+    @keyframes sweep{0%{width:0%;margin-left:0%;}50%{width:55%;margin-left:22%;}100%{width:0%;margin-left:100%;}}
+    .loading-lbl{font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.1em;text-transform:uppercase;}
+    .loading-ctx{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:5px;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    /* RESULTS */
+    .results{display:flex;flex-direction:column;gap:10px;animation:rise .3s ease;}
+    @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+    /* VERDICT */
+    .verdict-card{background:var(--s1);border:1px solid var(--s3);border-radius:var(--r);overflow:hidden;}
+    .verdict-card.v-go{border-color:var(--go-b);}
+    .verdict-card.v-maybe{border-color:var(--mb-b);}
+    .verdict-card.v-nogo{border-color:var(--ng-b);}
+    .verdict-top{display:flex;align-items:center;padding:16px;gap:12px;border-bottom:1px solid var(--s3);}
+    .score-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:68px;}
+    .score-big{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;letter-spacing:-.02em;}
+    .v-go .score-big{color:var(--go);} .v-maybe .score-big{color:var(--mb);} .v-nogo .score-big{color:var(--ng);}
+    .score-denom{font-family:var(--mono);font-size:9px;color:var(--txt3);letter-spacing:.1em;}
+    .badge-col{flex:1;min-width:0;}
+    .badge-word{font-family:var(--head);font-size:28px;font-weight:700;letter-spacing:.05em;line-height:1;}
+    .v-go .badge-word{color:var(--go);} .v-maybe .badge-word{color:var(--mb);} .v-nogo .badge-word{color:var(--ng);}
+    .badge-sub{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-top:4px;}
+    .v-go .badge-sub{color:var(--go-b);} .v-maybe .badge-sub{color:var(--mb-b);} .v-nogo .badge-sub{color:var(--ng-b);}
+    .offer-col{flex-shrink:0;text-align:right;}
+    .offer-lbl{font-family:var(--mono);font-size:9px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+    .offer-val{font-family:var(--head);font-size:24px;font-weight:700;color:var(--go);line-height:1;}
+    .offer-ask{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:4px;}
+    .summary-row{padding:12px 16px;background:var(--s2);}
+    .summary-txt{font-size:14px;color:var(--txt2);line-height:1.6;font-weight:300;}
+
+    /* MATH */
+    .math-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--s3);border:1px solid var(--s3);border-radius:var(--r);overflow:hidden;}
+    .math-cell{background:var(--s1);padding:14px 16px;}
+    .math-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--txt3);text-transform:uppercase;margin-bottom:6px;}
+    .math-val{font-family:var(--head);font-size:22px;font-weight:700;line-height:1;color:var(--txt);}
+    .math-val.pos{color:var(--go);} .math-val.neg{color:var(--ng);} .math-val.warn{color:var(--mb);}
+    .math-range{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:4px;}
+    .math-note{grid-column:1/-1;background:var(--s2);padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--txt3);border-top:1px solid var(--s3);}
+
+    /* FLAGS */
+    .flag-row{display:flex;border-bottom:1px solid var(--s3);}
+    .flag-row:last-child{border-bottom:none;}
+    .flag-sev{width:68px;flex-shrink:0;padding:14px 10px 12px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:flex-start;gap:5px;border-right:1px solid var(--s3);font-weight:500;}
+    .sev-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:1px;}
+    .flag-row.red .flag-sev{color:var(--ng);} .flag-row.red .sev-dot{background:var(--ng);}
+    .flag-row.yellow .flag-sev{color:var(--mb);} .flag-row.yellow .sev-dot{background:var(--mb);}
+    .flag-row.green .flag-sev{color:var(--go);} .flag-row.green .sev-dot{background:var(--go);}
+    .flag-txt{flex:1;padding:12px 14px;font-size:13px;color:var(--txt2);line-height:1.55;font-weight:300;}
+
+    /* NEGOTIATION */
+    .neg-row{display:flex;border-bottom:1px solid var(--s3);}
+    .neg-row:last-child{border-bottom:none;}
+    .neg-n{width:46px;flex-shrink:0;font-family:var(--mono);font-size:12px;color:var(--acc);display:flex;align-items:center;justify-content:center;border-right:1px solid var(--s3);}
+    .neg-t{flex:1;padding:14px;font-size:14px;color:var(--txt2);line-height:1.6;font-weight:300;}
+    .copy-row{padding:12px 16px;background:var(--s2);border-top:1px solid var(--s3);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+    .copy-btn{min-height:46px;padding:0 16px;background:var(--s3);border:1px solid var(--s5);color:var(--txt2);font-family:var(--mono);font-size:11px;letter-spacing:.1em;border-radius:var(--rsm);cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
+    .copy-btn.done{color:var(--go);border-color:var(--go-b);}
+    .share-btn{min-height:46px;padding:0 16px;background:var(--acc);border:none;color:#000;font-family:var(--mono);font-size:11px;letter-spacing:.1em;border-radius:var(--rsm);cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;font-weight:500;}
+
+    /* RESET */
+    .reset-btn{width:100%;min-height:52px;background:transparent;border:1px solid var(--s4);color:var(--txt3);font-family:var(--mono);font-size:12px;letter-spacing:.12em;border-radius:var(--r);cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
+
+    /* ERROR */
+    .err-card{background:var(--ng-bg);border:1px solid var(--ng-b);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+    .err-msg{font-family:var(--mono);font-size:12px;color:var(--ng);letter-spacing:.05em;line-height:1.6;margin-bottom:10px;}
+    .retry-btn{min-height:44px;padding:0 20px;background:var(--ng);border:none;color:#000;font-family:var(--head);font-size:16px;font-weight:700;letter-spacing:.06em;border-radius:var(--rsm);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+
+    /* HISTORY */
+    .hist-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--s3);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .15s;}
+    .hist-item:last-child{border-bottom:none;}
+    .hist-item:active{background:var(--s2);}
+    .hist-thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--s3);}
+    .hist-info{flex:1;min-width:0;}
+    .hist-item-name{font-size:14px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .hist-meta{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:3px;letter-spacing:.04em;}
+    .hist-note{font-size:12px;color:var(--txt2);margin-top:4px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .hist-badge{font-family:var(--head);font-size:16px;font-weight:700;flex-shrink:0;}
+    .hist-badge.go{color:var(--go);} .hist-badge.maybe{color:var(--mb);} .hist-badge.nogo{color:var(--ng);}
+    .hist-score{font-family:var(--mono);font-size:10px;color:var(--txt3);text-align:right;margin-top:2px;}
+    .hist-empty{padding:48px 20px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--txt3);letter-spacing:.08em;line-height:2;}
+    .hist-clear{width:100%;padding:14px;background:transparent;border:none;border-top:1px solid var(--s3);font-family:var(--mono);font-size:10px;color:var(--txt3);letter-spacing:.1em;cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
+    .hist-clear:active{color:var(--ng);}
+    .hist-warn{padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--txt3);background:var(--s2);border-top:1px solid var(--s3);letter-spacing:.04em;line-height:1.6;}
+
+    /* NOTE MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;}
+    .modal-sheet{width:100%;background:var(--s1);border-top:1px solid var(--s3);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));}
+    .modal-title{font-family:var(--head);font-size:20px;font-weight:700;color:var(--txt);margin-bottom:12px;}
+    .modal-input{width:100%;background:var(--s2);border:1px solid var(--s3);border-radius:var(--rsm);padding:12px 14px;color:var(--txt);font-family:var(--sans);font-size:16px;outline:none;resize:none;-webkit-appearance:none;line-height:1.5;}
+    .modal-input:focus{border-color:var(--s5);}
+    .modal-input::placeholder{color:var(--txt3);}
+    .modal-row{display:flex;gap:8px;margin-top:10px;}
+    .modal-save{flex:1;min-height:48px;background:var(--acc);border:none;color:#000;font-family:var(--head);font-size:17px;font-weight:700;border-radius:var(--rsm);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .modal-cancel{min-height:48px;padding:0 20px;background:var(--s3);border:1px solid var(--s4);color:var(--txt2);font-family:var(--mono);font-size:11px;letter-spacing:.1em;border-radius:var(--rsm);cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
+
+    /* SETTINGS */
+    .settings-section{margin-bottom:20px;}
+    .settings-label{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;padding:0 4px;margin-bottom:6px;}
+    .api-input{width:100%;background:var(--s1);border:1px solid var(--s3);border-radius:var(--r);padding:14px 16px;color:var(--txt);font-family:var(--mono);font-size:13px;outline:none;letter-spacing:.04em;-webkit-appearance:none;}
+    .api-input:focus{border-color:var(--acc);}
+    .api-input::placeholder{color:var(--txt3);}
+    .save-btn{width:100%;min-height:52px;background:var(--acc);color:#000;font-family:var(--head);font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;border:none;border-radius:var(--r);cursor:pointer;margin-top:8px;-webkit-tap-highlight-color:transparent;transition:opacity .15s;}
+    .save-btn:active{opacity:.82;}
+    .save-btn.saved{background:var(--go);}
+    .settings-hint{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:8px;line-height:1.7;letter-spacing:.03em;padding:0 2px;}
+    .settings-hint a{color:var(--acc);text-decoration:none;}
+    .settings-row{display:flex;align-items:center;justify-content:space-between;background:var(--s1);border:1px solid var(--s3);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;}
+    .settings-row-label{font-size:14px;font-weight:500;color:var(--txt);}
+    .settings-row-sub{font-family:var(--mono);font-size:10px;color:var(--txt3);margin-top:3px;letter-spacing:.03em;}
+    .key-status{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;letter-spacing:.06em;}
+    .key-status.set{color:var(--go);background:var(--go-bg);border:1px solid var(--go-b);}
+    .key-status.unset{color:var(--ng);background:var(--ng-bg);border:1px solid var(--ng-b);}
+
+    /* NO KEY BANNER */
+    .nokey-banner{background:var(--ng-bg);border:1px solid var(--ng-b);border-radius:var(--r);padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+    .nokey-text{flex:1;font-family:var(--mono);font-size:11px;color:var(--ng);line-height:1.6;letter-spacing:.03em;}
+    .nokey-btn{font-family:var(--head);font-size:15px;font-weight:700;background:var(--ng);color:#000;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;flex-shrink:0;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+
+
+
+    /* ── DATA VIZ ── */
+
+    /* Animated score - subtle tick effect */
+    .score-big.animating { transition: none; }
+
+    /* PRICE GAUGE */
+    .price-gauge {
+      background: var(--s1); border: 1px solid var(--s3); border-radius: var(--r);
+      padding: 18px 18px 22px; overflow: hidden;
+    }
+    .gauge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .gauge-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--txt3); text-transform: uppercase; }
+    .gauge-verdict { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 4px; text-transform: uppercase; }
+    .gauge-verdict.under { color: var(--go); background: var(--go-bg); border: 1px solid var(--go-b); }
+    .gauge-verdict.over  { color: var(--ng); background: var(--ng-bg); border: 1px solid var(--ng-b); }
+    .gauge-verdict.fair  { color: var(--mb); background: var(--mb-bg); border: 1px solid var(--mb-b); }
+
+    .gauge-track {
+      position: relative; height: 8px;
+      background: linear-gradient(90deg, var(--go) 0%, var(--mb) 50%, var(--ng) 100%);
+      border-radius: 4px; margin: 24px 0 14px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.4);
+    }
+    .gauge-segment {
+      position: absolute; top: -3px; bottom: -3px;
+      border-left: 2px dashed rgba(255,255,255,0.25);
+    }
+    .gauge-pointer {
+      position: absolute; top: -8px; transform: translateX(-50%);
+      width: 4px; height: 24px; background: var(--txt);
+      border-radius: 2px; box-shadow: 0 0 10px rgba(255,255,255,0.6);
+      transition: left 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .gauge-pointer::after {
+      content: ""; position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 6px solid transparent; border-right: 6px solid transparent;
+      border-top: 8px solid var(--txt);
+    }
+    .gauge-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--txt3); letter-spacing: 0.06em; }
+    .gauge-label-mid { font-family: var(--mono); font-size: 11px; color: var(--txt); font-weight: 500; }
+    .gauge-asking-label { font-family: var(--mono); font-size: 10px; color: var(--txt2); margin-top: 4px; text-align: center; }
+    .gauge-asking-label strong { color: var(--txt); font-weight: 600; }
+
+    /* WATERFALL */
+    .waterfall { background: var(--s1); border: 1px solid var(--s3); border-radius: var(--r); padding: 18px; }
+    .waterfall-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--txt3); text-transform: uppercase; margin-bottom: 14px; }
+    .wf-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .wf-row:last-child { margin-bottom: 0; }
+    .wf-label { width: 78px; flex-shrink: 0; font-family: var(--mono); font-size: 10px; color: var(--txt2); letter-spacing: 0.04em; }
+    .wf-bar-wrap { flex: 1; height: 22px; background: var(--s2); border-radius: 4px; overflow: hidden; position: relative; }
+    .wf-bar {
+      height: 100%; border-radius: 4px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; padding-right: 8px; justify-content: flex-end;
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+    }
+    .wf-bar.cost   { background: linear-gradient(90deg, #6b1818, var(--ng)); color: #fff; }
+    .wf-bar.repair { background: linear-gradient(90deg, #92400e, var(--mb)); color: #fff; }
+    .wf-bar.value  { background: linear-gradient(90deg, #166534, var(--go)); color: #000; }
+    .wf-bar.profit { background: linear-gradient(90deg, var(--go-b), var(--go)); color: #000; }
+    .wf-bar.loss   { background: linear-gradient(90deg, var(--ng-b), var(--ng)); color: #fff; }
+    .wf-divider { height: 1px; background: var(--s3); margin: 12px 0; }
+    .wf-final { display: flex; justify-content: space-between; align-items: center; padding-top: 4px; }
+    .wf-final-lbl { font-family: var(--mono); font-size: 11px; color: var(--txt2); letter-spacing: 0.06em; text-transform: uppercase; }
+    .wf-final-val { font-family: var(--head); font-size: 22px; font-weight: 700; }
+    .wf-final-val.pos { color: var(--go); }
+    .wf-final-val.neg { color: var(--ng); }
+
+    /* CASCADING FLAGS */
+    @keyframes flagIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .flag-row { animation: flagIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+    .flag-row:nth-child(1) { animation-delay: 0.05s; }
+    .flag-row:nth-child(2) { animation-delay: 0.13s; }
+    .flag-row:nth-child(3) { animation-delay: 0.21s; }
+    .flag-row:nth-child(4) { animation-delay: 0.29s; }
+    .flag-row:nth-child(5) { animation-delay: 0.37s; }
+    .flag-row:nth-child(6) { animation-delay: 0.45s; }
+
+    /* NEGOTIATION CASCADE */
+    @keyframes negIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .neg-row { animation: negIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+    .neg-row:nth-child(1) { animation-delay: 0.4s; }
+    .neg-row:nth-child(2) { animation-delay: 0.5s; }
+    .neg-row:nth-child(3) { animation-delay: 0.6s; }
+    .neg-row:nth-child(4) { animation-delay: 0.7s; }
+
+    /* VERDICT REVEAL */
+    @keyframes verdictReveal {
+      0%   { opacity: 0; transform: scale(0.85); }
+      60%  { transform: scale(1.04); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .badge-word { animation: verdictReveal 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: left center; }
+
+    /* MATH CELLS STAGGER */
+    @keyframes mathIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .math-cell { animation: mathIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+    .math-cell:nth-child(1) { animation-delay: 0.15s; }
+    .math-cell:nth-child(2) { animation-delay: 0.22s; }
+    .math-cell:nth-child(3) { animation-delay: 0.29s; }
+    .math-cell:nth-child(4) { animation-delay: 0.36s; }
+
+    /* LOADING PHASES */
+    .phase-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .phase-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 10px; border-radius: 6px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+      transition: all 0.3s ease;
+    }
+    .phase-item.pending { color: var(--txt3); }
+    .phase-item.active  { color: var(--acc); background: var(--acc-bg); }
+    .phase-item.done    { color: var(--go); }
+    .phase-icon {
+      width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; flex-shrink: 0;
+      border: 1.5px solid currentColor;
+    }
+    .phase-item.active .phase-icon::after {
+      content: ""; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--acc); animation: pulse 1s ease-in-out infinite;
+    }
+    .phase-item.done .phase-icon { background: var(--go); border-color: var(--go); color: #000; font-weight: 700; }
+    .phase-item.done .phase-icon::after { content: "✓"; font-size: 11px; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+    /* RESULTS CARD ENTRY STAGGER */
+    .verdict-card { animation: rise 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+    .price-gauge  { animation: rise 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.05s backwards; }
+    .waterfall    { animation: rise 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.1s backwards; }
+    .results > .card { animation: rise 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.15s backwards; }
+    .result-thumb { animation: rise 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+
+
+
+    /* ── HONEST PHASE LOADER ── */
+    .phase-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    /* Override prior styles - phases now driven by real state */
+
+    /* ── COLLAPSIBLE RAW NUMBERS ── */
+    .raw-toggle {
+      width: 100%; background: var(--s1); border: 1px solid var(--s3);
+      border-radius: var(--r); padding: 11px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+      color: var(--txt3); text-transform: uppercase; transition: all 0.15s;
+    }
+    .raw-toggle:active { background: var(--s2); }
+    .raw-toggle.open { border-radius: var(--r) var(--r) 0 0; border-bottom: none; }
+    .raw-arrow { transition: transform 0.25s ease; font-size: 12px; }
+    .raw-arrow.open { transform: rotate(180deg); }
+    .raw-content { background: var(--s1); border: 1px solid var(--s3); border-top: none; border-radius: 0 0 var(--r) var(--r); overflow: hidden; }
+    .raw-content .math-grid { border-radius: 0; border: none; }
+    .raw-content .math-grid .math-cell { animation: none !important; }
+
+    /* ── SCORE PERCENTILE ── */
+    .score-percentile {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--mono); font-size: 9px;
+      color: var(--txt3); letter-spacing: 0.08em;
+      margin-top: 5px; text-transform: uppercase;
+    }
+    .percentile-pill {
+      padding: 2px 7px; border-radius: 10px;
+      font-weight: 500;
+    }
+    .percentile-pill.top { color: var(--go); background: var(--go-bg); border: 1px solid var(--go-b); }
+    .percentile-pill.mid { color: var(--mb); background: var(--mb-bg); border: 1px solid var(--mb-b); }
+    .percentile-pill.low { color: var(--ng); background: var(--ng-bg); border: 1px solid var(--ng-b); }
+
+    /* ── TAPPABLE NEG LINES ── */
+    .neg-row { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.2s; }
+    .neg-row:active { background: var(--s2); }
+    .neg-row.copied { background: var(--go-bg); animation: copyFlash 0.6s ease; }
+    @keyframes copyFlash {
+      0%   { background: var(--go-bg); }
+      50%  { background: #0a3018; }
+      100% { background: var(--go-bg); }
+    }
+    .neg-row.copied .neg-n { color: var(--go); }
+    .neg-row .copy-hint {
+      font-family: var(--mono); font-size: 9px; color: var(--txt3);
+      letter-spacing: 0.1em; padding-right: 14px;
+      align-self: center; opacity: 0; transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+    .neg-row:hover .copy-hint, .neg-row.copied .copy-hint { opacity: 1; }
+    .neg-row.copied .copy-hint { color: var(--go); }
+
+    /* ── SWIPE TO DELETE HISTORY ── */
+    .hist-item-wrap {
+      position: relative; overflow: hidden;
+      border-bottom: 1px solid var(--s3);
+    }
+    .hist-item-wrap:last-child { border-bottom: none; }
+    .hist-delete-bg {
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 90px; background: var(--ng);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--head); font-size: 14px; font-weight: 700;
+      color: #fff; letter-spacing: 0.05em;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      text-transform: uppercase;
+    }
+    .hist-item-swipe {
+      position: relative; background: var(--s1);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform; z-index: 2;
+      touch-action: pan-y;
+    }
+    .hist-item-swipe.swiped { transform: translateX(-90px); }
+    .hist-item-wrap .hist-item { border-bottom: none; }
+
+    /* ── HISTORY FILTERS ── */
+    .hist-controls {
+      padding: 10px 12px; background: var(--s2);
+      border-bottom: 1px solid var(--s3);
+      display: flex; gap: 6px; align-items: center;
+      flex-wrap: wrap;
+    }
+    .hist-search {
+      flex: 1; min-width: 120px;
+      background: var(--s1); border: 1px solid var(--s3);
+      border-radius: 6px; padding: 7px 10px;
+      color: var(--txt); font-family: var(--sans); font-size: 13px;
+      outline: none; -webkit-appearance: none;
+    }
+    .hist-search:focus { border-color: var(--s5); }
+    .hist-search::placeholder { color: var(--txt3); }
+    .hist-filter-pill {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: 0.06em; padding: 6px 10px;
+      border-radius: 5px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      background: var(--s1); border: 1px solid var(--s3);
+      color: var(--txt3); text-transform: uppercase;
+      transition: all 0.15s;
+    }
+    .hist-filter-pill.active { background: var(--acc); color: #000; border-color: var(--acc); font-weight: 500; }
+
+    /* ── RESUME LAST SCAN BANNER ── */
+    .resume-banner {
+      background: var(--s1); border: 1px solid var(--s3);
+      border-radius: var(--r); padding: 10px 12px;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+    }
+    .resume-banner:active { background: var(--s2); }
+    .resume-thumb {
+      width: 40px; height: 40px; border-radius: 6px;
+      object-fit: cover; flex-shrink: 0; background: var(--s3);
+    }
+    .resume-info { flex: 1; min-width: 0; }
+    .resume-title {
+      font-size: 13px; font-weight: 500; color: var(--txt);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .resume-meta {
+      font-family: var(--mono); font-size: 9px; color: var(--txt3);
+      letter-spacing: 0.06em; margin-top: 2px;
+    }
+    .resume-arrow { color: var(--acc); font-size: 18px; flex-shrink: 0; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      padding: 56px 24px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .empty-icon {
+      font-size: 48px; opacity: 0.5;
+      filter: grayscale(0.5);
+    }
+    .empty-title {
+      font-family: var(--head); font-size: 18px; font-weight: 600;
+      color: var(--txt2); letter-spacing: 0.02em;
+    }
+    .empty-hint {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--txt3); letter-spacing: 0.06em;
+      line-height: 1.7; max-width: 280px;
+    }
+    .empty-cta {
+      margin-top: 8px; font-family: var(--head); font-size: 14px;
+      font-weight: 600; padding: 10px 20px;
+      background: var(--acc); color: #000; border: none; border-radius: 8px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.04em;
+    }
+
+
+
+    /* ── DASHBOARD HOME ── */
+    .home-greet {
+      padding: 22px 4px 22px;
+      border-bottom: 1px solid var(--s3);
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Subtle ambient glow behind greeting */
+    .home-greet::before {
+      content: "";
+      position: absolute;
+      top: -40px; left: -20px;
+      width: 260px; height: 160px;
+      background: radial-gradient(ellipse, #38bdf815 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .greet-eyebrow {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: 0.22em; color: var(--acc);
+      text-transform: uppercase; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .greet-eyebrow::before {
+      content: "";
+      width: 20px; height: 1px;
+      background: var(--acc); display: block;
+    }
+    .greet-title {
+      font-family: var(--head); font-size: clamp(36px, 9vw, 52px);
+      font-weight: 700; line-height: 1.0;
+      letter-spacing: -0.01em; color: var(--txt);
+    }
+    .greet-title .accent {
+      color: var(--acc);
+      text-shadow: 0 0 40px #38bdf840;
+    }
+    .greet-sub {
+      font-family: var(--sans); font-size: 14px;
+      color: var(--txt3); margin-top: 10px;
+      font-weight: 400; line-height: 1.5;
+      letter-spacing: 0.01em;
+    }
+
+    /* PRIMARY ACTION CARD */
+    .home-cta {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px 20px;
+      background: var(--acc);
+      border-radius: 14px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.12s, opacity 0.12s;
+      box-shadow: 0 8px 32px #38bdf835, 0 0 0 1px #38bdf820;
+      margin-bottom: 10px;
+      position: relative; overflow: hidden;
+    }
+    .home-cta::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .home-cta:active { transform: scale(0.97); opacity: 0.9; }
+    .home-cta-icon {
+      width: 54px; height: 54px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; flex-shrink: 0;
+    }
+    .home-cta-text { flex: 1; min-width: 0; color: #000; }
+    .home-cta-title {
+      font-family: var(--head); font-size: 22px;
+      font-weight: 700; letter-spacing: 0.02em; line-height: 1;
+    }
+    .home-cta-sub {
+      font-family: var(--mono); font-size: 10px;
+      font-weight: 500; opacity: 0.6; margin-top: 5px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .home-cta-arrow {
+      font-size: 28px; color: rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+
+    /* SECONDARY MODE BUTTONS */
+    .home-secondary {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-bottom: 16px;
+    }
+    .secondary-btn {
+      padding: 15px 14px; border: 1px solid var(--s4);
+      background: var(--s1); border-radius: 12px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; gap: 12px;
+      transition: all 0.15s;
+    }
+    .secondary-btn:active { background: var(--s2); transform: scale(0.97); }
+    .secondary-btn-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .secondary-btn.flip-mode { border-color: #1a4060; }
+    .secondary-btn.buy-mode  { border-color: #0d3020; }
+    .secondary-btn.flip-mode .secondary-btn-icon { background: var(--acc-bg); }
+    .secondary-btn.buy-mode  .secondary-btn-icon { background: var(--go-bg); }
+    .secondary-btn-text { flex: 1; min-width: 0; }
+    .secondary-btn-label {
+      font-family: var(--head); font-size: 16px;
+      font-weight: 600; color: var(--txt); line-height: 1;
+    }
+    .secondary-btn-sub {
+      font-family: var(--mono); font-size: 9px;
+      color: var(--txt3); margin-top: 4px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+
+    /* STATS GRID */
+    .stats-section { margin-bottom: 16px; }
+    .section-label {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: 0.18em; color: var(--txt3);
+      text-transform: uppercase; padding: 0 4px;
+      margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .section-link {
+      font-family: var(--mono); font-size: 9px;
+      color: var(--acc); cursor: pointer;
+      letter-spacing: 0.1em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-card {
+      background: var(--s1); border: 1px solid var(--s3);
+      border-radius: 12px; padding: 16px 16px 18px;
+      position: relative; overflow: hidden;
+      transition: transform 0.12s;
+    }
+    .stat-card:active { transform: scale(0.98); }
+    .stat-card.hero {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #0d1a0d 0%, var(--s1) 100%);
+      border-color: var(--go-b);
+    }
+    .stat-label {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: 0.16em; color: var(--txt3);
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .stat-value {
+      font-family: var(--head); font-size: 34px;
+      font-weight: 700; line-height: 1;
+      letter-spacing: -0.02em; color: var(--txt);
+    }
+    .stat-value.pos { color: var(--go); }
+    .stat-value.neg { color: var(--ng); }
+    .stat-value.acc { color: var(--acc); }
+    .stat-value.warn { color: var(--mb); }
+    .stat-value-prefix { font-size: 16px; opacity: 0.5; margin-right: 1px; }
+    .stat-sub {
+      font-family: var(--mono); font-size: 9px;
+      color: var(--txt3); margin-top: 5px;
+      letter-spacing: 0.05em;
+    }
+    .stat-sub.delta-pos { color: var(--go); }
+    .stat-sub.delta-neg { color: var(--ng); }
+
+    /* HIT RATE BAR */
+    .hit-rate-bar {
+      height: 4px; background: var(--s3);
+      border-radius: 2px; margin-top: 10px;
+      overflow: hidden; position: relative;
+    }
+    .hit-rate-fill {
+      height: 100%; background: var(--go);
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .hit-rate-segments {
+      position: absolute; inset: 0; display: flex;
+      justify-content: space-between;
+    }
+
+    /* RECENT SCANS STRIP */
+    .recent-scroll {
+      display: flex; gap: 10px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      padding: 4px 0 8px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+    .recent-scroll::-webkit-scrollbar { display: none; }
+    .recent-card {
+      flex-shrink: 0; width: 148px;
+      background: var(--s1); border: 1px solid var(--s4);
+      border-radius: 12px; overflow: hidden;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      scroll-snap-align: start;
+      transition: transform 0.15s;
+    }
+    .recent-card:active { transform: scale(0.96); }
+    .recent-card.go-card    { border-top: 2px solid var(--go); }
+    .recent-card.maybe-card { border-top: 2px solid var(--mb); }
+    .recent-card.nogo-card  { border-top: 2px solid var(--ng); }
+    .recent-card-img {
+      width: 100%; height: 104px; object-fit: cover;
+      background: var(--s3);
+    }
+    .recent-card-img-empty {
+      width: 100%; height: 100px; background: var(--s3);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--txt3); font-size: 24px;
+    }
+    .recent-card-body { padding: 8px 10px 10px; }
+    .recent-card-name {
+      font-size: 12px; font-weight: 500; color: var(--txt);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .recent-card-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: 0.04em;
+    }
+    .recent-card-verdict {
+      font-family: var(--head); font-size: 12px;
+      font-weight: 700; letter-spacing: 0.04em;
+    }
+    .recent-card-verdict.go    { color: var(--go); }
+    .recent-card-verdict.maybe { color: var(--mb); }
+    .recent-card-verdict.nogo  { color: var(--ng); }
+    .recent-card-score { color: var(--txt3); }
+
+    .recent-empty {
+      flex-shrink: 0; width: 100%;
+      padding: 24px 16px; background: var(--s1);
+      border: 1px dashed var(--s3); border-radius: 10px;
+      text-align: center;
+    }
+    .recent-empty-icon { font-size: 32px; opacity: 0.4; margin-bottom: 8px; }
+    .recent-empty-text {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--txt3); letter-spacing: 0.06em;
+      line-height: 1.6;
+    }
+
+    /* DAILY TIP / INSIGHT */
+    .insight-card {
+      background: linear-gradient(135deg, var(--s1) 0%, var(--s2) 100%);
+      border: 1px solid var(--s3); border-radius: 12px;
+      padding: 16px; display: flex; gap: 12px;
+      align-items: flex-start;
+    }
+    .insight-icon {
+      width: 36px; height: 36px;
+      background: var(--acc-bg); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .insight-text { flex: 1; }
+    .insight-title {
+      font-family: var(--head); font-size: 14px;
+      font-weight: 600; color: var(--txt); margin-bottom: 4px;
+      letter-spacing: 0.01em;
+    }
+    .insight-body {
+      font-size: 13px; color: var(--txt2);
+      line-height: 1.55; font-weight: 300;
+    }
+
+
+    /* ── MULTI-IMAGE UPLOAD ── */
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 12px;
+    }
+    .img-thumb-wrap {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--s3);
+    }
+    .img-thumb {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .img-thumb-remove {
+      position: absolute; top: 4px; right: 4px;
+      width: 22px; height: 22px;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      color: #fff; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .img-thumb-num {
+      position: absolute; bottom: 4px; left: 5px;
+      font-family: var(--mono); font-size: 9px;
+      color: rgba(255,255,255,0.7); letter-spacing: 0.04em;
+    }
+    .img-add-btn {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 1.5px dashed var(--s5);
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 4px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      font-size: 22px; color: var(--txt3);
+      transition: all 0.15s; position: relative;
+    }
+    .img-add-btn:active { background: var(--acc-bg); border-color: var(--acc); }
+    .img-add-btn input {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .img-add-label {
+      font-family: var(--mono); font-size: 9px;
+      color: var(--txt3); letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .img-grid-footer {
+      padding: 0 12px 12px;
+      font-family: var(--mono); font-size: 9px;
+      color: var(--txt3); letter-spacing: 0.06em;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .img-count-pill {
+      background: var(--s3); border: 1px solid var(--s4);
+      border-radius: 10px; padding: 3px 10px;
+      font-family: var(--mono); font-size: 9px;
+      color: var(--txt2); letter-spacing: 0.06em;
+    }
+
+    /* BOTTOM NAV */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--s3);display:flex;align-items:center;justify-content:space-around;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));z-index:100;}
+    .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent;transition:background .15s;}
+    .nav-item:active{background:var(--s3);}
+    .nav-icon{font-size:20px;}
+    .nav-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--txt3);text-transform:uppercase;}
+    .nav-item.active .nav-lbl{color:var(--acc);}
+  </style>
+
+</head>
+<body>
+  <div id="pre-load">
+    <div class="pl-logo">KevTify</div>
+    <div class="pl-tagline">Marketplace Deal Intelligence</div>
+    <div class="pl-bar"><div class="pl-fill"></div></div>
+  </div>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useCallback, useEffect } = React;
+
+    const AVATAR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABQAFADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDMVqjuWH2KcE4/dvz+Bpobmkch0dDyGUgj6iuFHY0Uvh3p1oLazSWO8JWVWkmig853YrnykUAg8EE5+h717j8NIvDmjC4thpUErzF5RJcWaicDPKv1/pWd8FNLW68C2kGoRiDbuM7rGFLPuPYYHpXTR6RpsesSndObVYSCYoi+CB32+/FefWqScrI9zC4Oj7NOWravseUeNtM0Gae91Sxey0ea4gZILKOzIguY2GTHI4O0McAggAhgK+bL6JrTxEEG5QlwuCw+YAMCPxxX294d0C2l0Z42uOQzHy3UgMDyAy+vJHPpXyz8cLCGD4lz/ZkA8+S3YqP4WOcj8cA/jXVhKrd4s48xwsadpxO0mcZP1qpM49KWaTk896qTSds11HkiTOO5rPuGB9almlUfWqM0nBNMDslyelRzmaNiPLbp1pwnWGJnyAwxt3D5T9e9c7r/AI0tob37C8EizBQd0Y4Geg56n6VjHVnS4SlpFH0L8B/ENrd+G9Q0K9IE8J3KG6tGwwMfQ8flXU6L4a1a3ttlne6WsaM2TPHK0syk/dZhIMfUAV8+/CK6m1rVLw2ZeO5to1wMYLA5yPcV754a8WLaaTJDqmlSPcFdrODw351xVFy1XY9ShKpGha2v+X3FjRrFdLn1S/vTBE0gAjjWR2ijx/FlyT6k/SvknWb628WfFbWvEMC5062n2Wef4toCK35Ln8RXqfxn8UatP4e1RLYS2dkIirEn5mB4Cg+5xmvG/BbQRaBHFHIhkDM0qqeVYnv+AFbYWDV5M58wquTOjll96qySjnmoZ5h2JqpJKPU12Hlkk82T1qncS9s0ySQZ6mqk0g9TVCN/UNXnm02QW6CCRlGySU5VfeuGKJYKzNrUcpJJKly5Y/7vNZl7e3104Se5acDhVA4H0AqOOyugPNEbIvUlxipjCx9NH2cH+6gdVoHiCO3ljminns7lDlHH7og+oYHivZPBnxq1HSrpY9ft/wC3LCXahMgSOZDjhlcfe993X1FfPNjDd3TFYeE7sRxWktpawYicq0rjA54z9KidKEtzqVR1IWkrr7j1r4vfEGPxhpsul6Toa2NuGDyySTbmY8FQAABXjFgbi21YTR3IdllUSBD8qjPO49Pwp/2b7VFvEQhRWwR6jr/PNZ4MlpdG4tQFaP24I7g+tVCmoRsjixUIzVrWPQGmVxuSRWX1BzVeWT3rm7LVhJPi6t441b+OHKkH8KsTXktq4dpTcWbf8tcfNH9fUUzyq2ClCPPF3X4/cacsnHWqsj5P3qjeYMoYMCDyCKrySe9UcRsXdjb6Mu5XhAboAMufw6ms9rS6vm8y8LxQD7sfRm+voK6h7Cxsz/otoDMertyR+JqJrF35bkmslI+9nhr6dOxP4J8InWIr28aOSSK1ULFAjAAuRkFhkZA9M96xNL8JaveXWYbZp5AxJMkgj6Hng8kj0ArrPDd1f6G7vYXkkAlx5iYDI/1B4NX9U1/U7rZNPcpE0WQjQxLGyjvyBmt41KXKk07nn1MBjPauUHHldt76HEDR7qe3OyLZGT8rk7QR83c/Q/lVK50fS7eMGPUWuZiD5kcSgonoNx6n1xxWncrumMRJ2ncoBPHIqnBbORlkIBqOZW0NJYduWrujASzXc3llyoODuAzVmJ1SCTzACCNrKe5/+vV25tHjcyRk89RWffSLEqOUYlm4Ud2Hb/PpRuYuHsyjau1tdS2Lk7UO6Pnt6VM8mao6iJYb63lmxygDMDxnnipo2LsAOppnzWIhyVXFHrsQjALbd2e/rSrGu3CgGoTKsaBpGC54+gpn2+2xhZFJrmsfpSlHqSyxEL6Vm6jziMHcT2zU0+oKqk71PoAajsInuJTPIMDsDQZzal7qI9kYiuGZQXRsj2pJWRlBVQMii6mS3lmLH7/PTpyazRcCb5UyQPeqsc0pJOxJcBTnaM5rn9ajkWWEQY3s5OD0xg10SRE8nB9Kx9dxDf2rNwroyj/eHb8ifyq4nDiY+7cx7+2a4ilgkIMgQEEdMjpWfBcpa2LXEx+ZPlx3JrbneKBSSVUHr71ynieMZWdMhHOcH1rRK54OY09PaLdH/9k=";
+
+    const PROMPT_FLIP = `You are KevTify, a sharp deal analyst for someone flipping items for profit. Margins matter most. Be direct, specific, and realistic on repair costs.
+
+Return ONLY valid JSON, no markdown:
+{
+  "item": "concise item name",
+  "asking_price": number or null,
+  "verdict": "GO" | "MAYBE" | "NO-GO",
+  "score": 0-100,
+  "summary": "2-3 sentences on margin potential and key risks",
+  "financials": {
+    "estimated_repair_cost_low": number,
+    "estimated_repair_cost_high": number,
+    "estimated_resale_low": number,
+    "estimated_resale_high": number,
+    "estimated_profit_low": number,
+    "estimated_profit_high": number,
+    "notes": "key repair and resale assumptions"
+  },
+  "flags": [{ "severity": "red"|"yellow"|"green", "text": "specific observation" }],
+  "negotiation_lines": ["line1","line2","line3"],
+  "opening_offer": number or null
+}
+Score: 80-100=GO, 50-79=MAYBE, 0-49=NO-GO. Reference specific listing details in negotiation lines.`;
+
+    const PROMPT_BUY = `You are KevTify, a sharp deal analyst for a personal purchase. Evaluate whether this is fairly priced and worth buying. Be direct.
+
+Return ONLY valid JSON, no markdown:
+{
+  "item": "concise item name",
+  "asking_price": number or null,
+  "verdict": "GO" | "MAYBE" | "NO-GO",
+  "score": 0-100,
+  "summary": "2-3 sentences on whether this is a fair price and worth buying",
+  "financials": {
+    "fair_market_low": number,
+    "fair_market_high": number,
+    "estimated_repair_cost_low": number,
+    "estimated_repair_cost_high": number,
+    "overprice_underprice": number,
+    "total_cost_low": number,
+    "notes": "what this typically sells for and whether this ask is fair"
+  },
+  "flags": [{ "severity": "red"|"yellow"|"green", "text": "specific observation" }],
+  "negotiation_lines": ["line1","line2","line3"],
+  "opening_offer": number or null
+}
+Score: 80-100=GO, 50-79=MAYBE, 0-49=NO-GO. overprice_underprice: negative=under market, positive=over market.`;
+
+    const STEPS = ["READING LISTING","ANALYZING IMAGE","CALCULATING COMPS","SCORING DEAL"];
+    const fmt = n => n != null ? "$" + Number(n).toLocaleString() : "—";
+    const vc  = v => v==="GO" ? "v-go" : v==="MAYBE" ? "v-maybe" : "v-nogo";
+    const pc  = (lo,hi) => { const m=(Number(lo)+Number(hi))/2; return m>0?"pos":m<0?"neg":"warn"; };
+    const LS_API  = "kevtify_api_key";
+    const LS_HIST = "kevtify_history";
+    const LS_INST = "kevtify_install_dismissed";
+    const CTX_MAX = 300;
+
+    // Compress + convert image to JPEG, max 1200px wide
+    const processImage = (file) => new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+        URL.revokeObjectURL(url);
+        resolve({ dataUrl, b64: dataUrl.split(",")[1] });
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+
+    const formatShare = (data, mode) => {
+      const f = data.financials || {};
+      const lines = [
+        "KevTify Deal Analysis",
+        "─────────────────────",
+        data.item + " | " + (mode === "flip" ? "FLIP" : "BUY") + " MODE",
+        "Verdict: " + data.verdict + " (" + data.score + "/100)",
+        "Asking: " + fmt(data.asking_price) + " → Open at: " + fmt(data.opening_offer),
+        "",
+        data.summary,
+        "",
+      ];
+      if (mode === "flip") {
+        lines.push("Repair: " + fmt(f.estimated_repair_cost_low) + "–" + fmt(f.estimated_repair_cost_high));
+        lines.push("Resale: " + fmt(f.estimated_resale_low) + "–" + fmt(f.estimated_resale_high));
+        lines.push("Profit: " + fmt(f.estimated_profit_low) + "–" + fmt(f.estimated_profit_high));
+      } else {
+        lines.push("Fair Market: " + fmt(f.fair_market_low) + "–" + fmt(f.fair_market_high));
+        lines.push("vs Market: " + (f.overprice_underprice < 0 ? "-" : "+") + "$" + Math.abs(Number(f.overprice_underprice || 0)).toLocaleString());
+      }
+      if (f.notes) lines.push("Note: " + f.notes);
+      if (data.flags?.length) {
+        lines.push(""); lines.push("Flags:");
+        data.flags.forEach(fl => lines.push("  [" + fl.severity.toUpperCase() + "] " + fl.text));
+      }
+      if (data.negotiation_lines?.length) {
+        lines.push(""); lines.push("Negotiation:");
+        data.negotiation_lines.forEach((l,i) => lines.push("  " + (i+1) + ". " + l));
+      }
+      return lines.join("\n");
+    };
+
+
+
+    // ── Animated number counter
+    function AnimatedNumber({ value, duration = 1100, prefix = "", suffix = "" }) {
+      const [display, setDisplay] = useState(0);
+      useEffect(() => {
+        if (value == null) { setDisplay(0); return; }
+        const target = Number(value);
+        if (isNaN(target)) { setDisplay(0); return; }
+        const start = performance.now();
+        let raf;
+        const tick = (now) => {
+          const elapsed = now - start;
+          const t = Math.min(elapsed / duration, 1);
+          // ease-out cubic
+          const eased = 1 - Math.pow(1 - t, 3);
+          setDisplay(target * eased);
+          if (t < 1) raf = requestAnimationFrame(tick);
+          else setDisplay(target);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+      }, [value]);
+      const rounded = Math.round(display);
+      return <span>{prefix}{rounded.toLocaleString()}{suffix}</span>;
+    }
+
+    // ── Animated dollar — same but with $ formatting and integer rounding
+    function AnimatedDollar({ value, duration = 1100 }) {
+      if (value == null) return <span>—</span>;
+      return <span>$<AnimatedNumber value={value} duration={duration} /></span>;
+    }
+
+    // ── Price Gauge: shows where asking price falls in the value range
+    function PriceGauge({ asking, lo, hi, mode }) {
+      // For flip mode: lo/hi = resale range, gauge shows asking vs what it could sell for
+      // For buy mode: lo/hi = fair market range, gauge shows asking vs what it should cost
+      if (asking == null || lo == null || hi == null) return null;
+      const a = Number(asking), l = Number(lo), h = Number(hi);
+      // Extend the range visually so asking prices outside the band still show on the gauge
+      const range = h - l;
+      const padding = Math.max(range * 0.4, 50);
+      const minBound = l - padding;
+      const maxBound = h + padding;
+      const pct = Math.max(2, Math.min(98, ((a - minBound) / (maxBound - minBound)) * 100));
+      const lowMark = ((l - minBound) / (maxBound - minBound)) * 100;
+      const highMark = ((h - minBound) / (maxBound - minBound)) * 100;
+
+      let verdict, vClass;
+      if (a < l) { verdict = mode === "flip" ? "BELOW RESALE" : "UNDERPRICED"; vClass = "under"; }
+      else if (a > h) { verdict = mode === "flip" ? "ABOVE RESALE" : "OVERPRICED"; vClass = "over"; }
+      else { verdict = "WITHIN RANGE"; vClass = "fair"; }
+
+      return (
+        <div className="price-gauge">
+          <div className="gauge-header">
+            <div className="gauge-title">{mode === "flip" ? "Asking vs Resale Range" : "Asking vs Fair Market"}</div>
+            <div className={"gauge-verdict " + vClass}>{verdict}</div>
+          </div>
+          <div className="gauge-track">
+            <div className="gauge-segment" style={{left: lowMark + "%"}} />
+            <div className="gauge-segment" style={{left: highMark + "%"}} />
+            <div className="gauge-pointer" style={{left: pct + "%"}} />
+          </div>
+          <div className="gauge-labels">
+            <span>${Math.round(minBound).toLocaleString()}</span>
+            <span className="gauge-label-mid">${l.toLocaleString()} – ${h.toLocaleString()}</span>
+            <span>${Math.round(maxBound).toLocaleString()}</span>
+          </div>
+          <div className="gauge-asking-label">
+            Asking: <strong>${a.toLocaleString()}</strong>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Profit Waterfall — visual breakdown of the deal math
+    function Waterfall({ data, mode }) {
+      const f = data.financials || {};
+      const ask = Number(data.asking_price || 0);
+
+      if (mode === "flip") {
+        const repairMid = ((Number(f.estimated_repair_cost_low||0)) + (Number(f.estimated_repair_cost_high||0))) / 2;
+        const resaleMid = ((Number(f.estimated_resale_low||0)) + (Number(f.estimated_resale_high||0))) / 2;
+        const profitMid = resaleMid - ask - repairMid;
+        const max = Math.max(ask + repairMid, resaleMid, 1);
+
+        const bars = [
+          { lbl: "Buy In",   val: ask,       cls: "cost",   pct: (ask/max)*100 },
+          { lbl: "+ Repair", val: repairMid, cls: "repair", pct: (repairMid/max)*100 },
+          { lbl: "= Resale", val: resaleMid, cls: "value",  pct: (resaleMid/max)*100 },
+        ];
+
+        return (
+          <div className="waterfall">
+            <div className="waterfall-title">Deal Breakdown</div>
+            {bars.map((b,i) => (
+              <div key={i} className="wf-row">
+                <div className="wf-label">{b.lbl}</div>
+                <div className="wf-bar-wrap">
+                  <div className={"wf-bar " + b.cls} style={{width: Math.max(b.pct,10) + "%"}}>
+                    <AnimatedDollar value={b.val} duration={900 + i*150} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="wf-divider" />
+            <div className="wf-final">
+              <div className="wf-final-lbl">Net Profit</div>
+              <div className={"wf-final-val " + (profitMid > 0 ? "pos" : "neg")}>
+                {profitMid >= 0 ? "+" : "-"}<AnimatedDollar value={Math.abs(profitMid)} duration={1300} />
+              </div>
+            </div>
+          </div>
+        );
+      } else {
+        // Buy mode
+        const fairLo = Number(f.fair_market_low || 0);
+        const fairHi = Number(f.fair_market_high || 0);
+        const fairMid = (fairLo + fairHi) / 2;
+        const repairMid = ((Number(f.estimated_repair_cost_low||0)) + (Number(f.estimated_repair_cost_high||0))) / 2;
+        const totalCost = ask + repairMid;
+        const savings = fairMid - totalCost;
+        const max = Math.max(ask + repairMid, fairMid, 1);
+
+        const bars = [
+          { lbl: "Asking",   val: ask,       cls: "cost",   pct: (ask/max)*100 },
+          { lbl: "+ Repair", val: repairMid, cls: "repair", pct: (repairMid/max)*100 },
+          { lbl: "Fair Mkt", val: fairMid,   cls: "value",  pct: (fairMid/max)*100 },
+        ];
+
+        return (
+          <div className="waterfall">
+            <div className="waterfall-title">Cost vs Market Value</div>
+            {bars.map((b,i) => (
+              <div key={i} className="wf-row">
+                <div className="wf-label">{b.lbl}</div>
+                <div className="wf-bar-wrap">
+                  <div className={"wf-bar " + b.cls} style={{width: Math.max(b.pct,10) + "%"}}>
+                    <AnimatedDollar value={b.val} duration={900 + i*150} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="wf-divider" />
+            <div className="wf-final">
+              <div className="wf-final-lbl">{savings >= 0 ? "You Save" : "You Overpay"}</div>
+              <div className={"wf-final-val " + (savings >= 0 ? "pos" : "neg")}>
+                {savings >= 0 ? "+" : "-"}<AnimatedDollar value={Math.abs(savings)} duration={1300} />
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+
+
+    // ── Calculate score percentile vs history
+    const calcPercentile = (score, history, mode) => {
+      const sameMode = history.filter(h => h.mode === mode && typeof h.score === "number");
+      if (sameMode.length < 3) return null;
+      const lower = sameMode.filter(h => h.score < score).length;
+      const pct = Math.round((lower / sameMode.length) * 100);
+      return { pct, total: sameMode.length };
+    };
+
+    function App() {
+      const [tab,      setTab]     = useState("home");
+      const [mode,     setMode]    = useState("flip");
+      const [images,   setImages]  = useState([]); // [{dataUrl, b64, mtype}]
+      const [converting, setConverting] = useState(false);
+      // Compat helpers — first image for display/thumb
+      const img = images[0]?.dataUrl || null;
+      const b64 = images[0]?.b64 || null;
+      const [ctx,      setCtx]     = useState("");
+      const [busy,     setBusy]    = useState(false);
+      const [phase,    setPhase]   = useState(0); // 0=upload, 1=waiting, 2=parsing, 3=done
+      const [data,     setData]    = useState(null);
+      const [err,      setErr]     = useState(null);
+      const [copied,   setCopied]  = useState(false);
+      const [clock,    setClock]   = useState("");
+      const [apiKey,   setApiKey]  = useState(() => localStorage.getItem(LS_API) || "");
+      const [keyDraft, setKeyDraft]= useState(() => localStorage.getItem(LS_API) || "");
+      const [keySaved, setKeySaved]= useState(false);
+      const [history,  setHistory] = useState(() => { try { return JSON.parse(localStorage.getItem(LS_HIST)||"[]"); } catch { return []; } });
+      const [showInstall, setShowInstall] = useState(() => !localStorage.getItem(LS_INST));
+      const [noteModal, setNoteModal] = useState(null); // { id, note }
+      const [noteDraft, setNoteDraft] = useState("");
+      const [showRaw,  setShowRaw]  = useState(false);
+      const [copiedLine, setCopiedLine] = useState(-1);
+      const [histSearch, setHistSearch] = useState("");
+      const [histFilter, setHistFilter] = useState("all"); // all | go | maybe | nogo | flip | buy
+      const [swipedId,  setSwipedId]  = useState(null);
+      const swipeStart = useRef(null);
+      const analyzeRef = useRef(null);
+      const fileRef = useRef();
+
+      useEffect(() => {
+        const tick = () => setClock(new Date().toLocaleTimeString("en-US",{hour12:false}));
+        tick(); const id = setInterval(tick,1000); return () => clearInterval(id);
+      },[]);
+
+      // Phase is now driven by real fetch progress, not a fake timer
+
+      // Hide pre-load screen once React mounts
+      useEffect(() => {
+        const el = document.getElementById("pre-load");
+        if (el) el.style.display = "none";
+      },[]);
+
+      const load = useCallback(async (files) => {
+        const fileList = Array.from(files || []).filter(f => f.type.startsWith("image/"));
+        if (!fileList.length) return;
+        setConverting(true);
+        try {
+          const processed = await Promise.all(fileList.map(async f => {
+            const { dataUrl, b64: encoded } = await processImage(f);
+            return { dataUrl, b64: encoded, mtype: "image/jpeg" };
+          }));
+          setImages(prev => {
+            const combined = [...prev, ...processed].slice(0, 5); // max 5 images
+            return combined;
+          });
+          setData(null); setErr(null);
+        } catch(e) {
+          setErr("Could not process image. Try a JPEG or PNG screenshot.");
+        } finally {
+          setConverting(false);
+        }
+      },[]);
+
+      const saveToHistory = (result, imgData, modeName, context) => {
+        const entry = {
+          id: Date.now(),
+          item: result.item || "Unknown Item",
+          verdict: result.verdict,
+          score: result.score,
+          asking_price: result.asking_price,
+          mode: modeName,
+          thumb: imgData,
+          ctx: context || "",
+          note: "",
+          ts: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}),
+          data: result
+        };
+        const updated = [entry, ...history].slice(0, 50);
+        setHistory(updated);
+        try { localStorage.setItem(LS_HIST, JSON.stringify(updated)); } catch(e) {}
+      };
+
+      const updateNote = (id, note) => {
+        const updated = history.map(e => e.id === id ? {...e, note} : e);
+        setHistory(updated);
+        try { localStorage.setItem(LS_HIST, JSON.stringify(updated)); } catch(e) {}
+      };
+
+      const analyze = async (overrideMode) => {
+        if (!images.length || !apiKey) { if (!apiKey) setTab("settings"); return; }
+        const useMode = overrideMode || mode;
+        setBusy(true); setData(null); setErr(null); setPhase(0);
+        setTimeout(() => analyzeRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"}), 100);
+        try {
+          const imgNote = images.length > 1 ? " I have provided " + images.length + " screenshots of the same listing (price, description, photos, etc). Use all of them together." : "";
+          const userText = ctx.trim()
+            ? "Analyze this marketplace listing." + imgNote + " Additional context: " + ctx.trim() + " Return only the JSON."
+            : "Analyze this marketplace listing." + imgNote + " Return only the JSON.";
+
+          setPhase(1); // sending request
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method:"POST",
+            headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+            body:JSON.stringify({
+              model:"claude-sonnet-4-5",
+              max_tokens:1500,
+              system: useMode==="flip" ? PROMPT_FLIP : PROMPT_BUY,
+              messages:[{role:"user",content:[
+                ...images.map(im => ({type:"image",source:{type:"base64",media_type:im.mtype,data:im.b64}})),
+                {type:"text",text:userText}
+              ]}]
+            })
+          });
+          if (!res.ok) {
+            const ej = await res.json().catch(()=>({}));
+            if (res.status===401) throw new Error("AUTH");
+            if (res.status===429) throw new Error("RATE");
+            throw new Error("API_" + res.status + ": " + (ej?.error?.message||""));
+          }
+          setPhase(2); // got response, parsing
+          const json = await res.json();
+          const txt = (json.content||[]).map(b=>b.text||"").join("");
+          const match = txt.replace(/```json|```/g,"").trim().match(/\{[\s\S]*\}/);
+          if (!match) throw new Error("NO_JSON");
+          const result = JSON.parse(match[0]);
+          setPhase(3); // done
+          setData(result);
+          // Update mode if it was overridden
+          if (overrideMode && overrideMode !== mode) setMode(overrideMode);
+          saveToHistory(result, images[0]?.dataUrl || null, useMode, ctx);
+          // Haptic feedback on result
+          if (navigator.vibrate) {
+            const pattern = result.verdict === "GO" ? [40, 60, 40] : result.verdict === "MAYBE" ? [30] : [80];
+            navigator.vibrate(pattern);
+          }
+        } catch(e) {
+          const m = e.message||"";
+          console.error("KevTify analyze error:", e);
+          if (m==="AUTH")     setErr("API key rejected — check your key in Settings.");
+          else if (m==="RATE") setErr("Rate limited. Wait a moment and try again.");
+          else if (m==="NO_JSON") setErr("Claude returned an unexpected response. Try again.");
+          else if (m.startsWith("API_400")) setErr("Bad request: " + m.replace("API_400: ","") + ". Try a clearer screenshot.");
+          else if (m.startsWith("API_")) setErr("API error " + m + ". Check your key and try again.");
+          else setErr("Error: " + m + ". Check connection and try again.");
+        } finally { setBusy(false); }
+      };
+
+      const reset = () => { setImages([]); setData(null); setErr(null); setCtx(""); };
+
+      const copy = () => {
+        if (!data?.negotiation_lines) return;
+        navigator.clipboard.writeText(data.negotiation_lines.join("\n"));
+        setCopied(true); setTimeout(()=>setCopied(false),2000);
+      };
+
+      const share = async () => {
+        if (!data) return;
+        const text = formatShare(data, mode);
+        if (navigator.share) {
+          try { await navigator.share({ title: "KevTify: " + data.item, text }); return; } catch(e) {}
+        }
+        navigator.clipboard.writeText(text);
+        alert("Analysis copied to clipboard!");
+      };
+
+      const saveKey = () => {
+        const t = keyDraft.trim();
+        setApiKey(t);
+        try { localStorage.setItem(LS_API, t); } catch(e) {}
+        setKeySaved(true); setTimeout(()=>setKeySaved(false),2000);
+      };
+
+      const clearHistory = () => {
+        setHistory([]);
+        try { localStorage.removeItem(LS_HIST); } catch(e) {}
+      };
+
+      const loadFromHistory = (entry) => {
+        setData(entry.data);
+        setImg(entry.thumb);
+        setMode(entry.mode);
+        setCtx(entry.ctx || "");
+        setTab("scan");
+      };
+
+      const dismissInstall = () => {
+        setShowInstall(false);
+        try { localStorage.setItem(LS_INST, "1"); } catch(e) {}
+      };
+
+      const openNote = (entry) => {
+        setNoteModal(entry);
+        setNoteDraft(entry.note || "");
+      };
+
+      const saveNote = () => {
+        if (!noteModal) return;
+        updateNote(noteModal.id, noteDraft);
+        setNoteModal(null);
+      };
+
+      const deleteHistoryItem = (id) => {
+        const updated = history.filter(e => e.id !== id);
+        setHistory(updated);
+        try { localStorage.setItem(LS_HIST, JSON.stringify(updated)); } catch(e) {}
+        setSwipedId(null);
+      };
+
+      // Swipe handlers for history items
+      const onSwipeStart = (id, e) => {
+        const touch = e.touches?.[0];
+        if (!touch) return;
+        swipeStart.current = { id, x: touch.clientX, y: touch.clientY };
+      };
+      const onSwipeEnd = (id, e) => {
+        if (!swipeStart.current || swipeStart.current.id !== id) return;
+        const touch = e.changedTouches?.[0];
+        if (!touch) return;
+        const dx = touch.clientX - swipeStart.current.x;
+        const dy = Math.abs(touch.clientY - swipeStart.current.y);
+        if (dx < -40 && dy < 30) setSwipedId(id);
+        else if (dx > 20 && swipedId === id) setSwipedId(null);
+        swipeStart.current = null;
+      };
+
+      // Filter + search history
+      const filteredHistory = history.filter(e => {
+        if (histFilter === "go" && e.verdict !== "GO") return false;
+        if (histFilter === "maybe" && e.verdict !== "MAYBE") return false;
+        if (histFilter === "nogo" && e.verdict !== "NO-GO") return false;
+        if (histFilter === "flip" && e.mode !== "flip") return false;
+        if (histFilter === "buy" && e.mode !== "buy") return false;
+        if (histSearch && !(e.item||"").toLowerCase().includes(histSearch.toLowerCase())) return false;
+        return true;
+      });
+
+      const lastScan = history[0];
+
+      // ── Dashboard stats ──
+      const stats = (() => {
+        if (history.length === 0) return null;
+        const flips = history.filter(h => h.mode === "flip");
+        const buys  = history.filter(h => h.mode === "buy");
+        const goCount = history.filter(h => h.verdict === "GO").length;
+        const hitRate = Math.round((goCount / history.length) * 100);
+
+        // Last 7 days
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const recent = history.filter(h => h.id >= sevenDaysAgo);
+
+        // Estimated profit potential from flip GO verdicts
+        const flipGoes = flips.filter(h => h.verdict === "GO");
+        let totalProfitLow = 0, totalProfitHigh = 0;
+        flipGoes.forEach(h => {
+          const f = h.data?.financials;
+          if (f) {
+            totalProfitLow  += Number(f.estimated_profit_low  || 0);
+            totalProfitHigh += Number(f.estimated_profit_high || 0);
+          }
+        });
+
+        // Money saved from buy GO verdicts
+        const buyGoes = buys.filter(h => h.verdict === "GO");
+        let totalSaved = 0;
+        buyGoes.forEach(h => {
+          const f = h.data?.financials;
+          if (f && f.fair_market_low && h.asking_price) {
+            const fairMid = (Number(f.fair_market_low) + Number(f.fair_market_high)) / 2;
+            const total   = Number(h.asking_price) + ((Number(f.estimated_repair_cost_low||0) + Number(f.estimated_repair_cost_high||0)) / 2);
+            const savings = fairMid - total;
+            if (savings > 0) totalSaved += savings;
+          }
+        });
+
+        return {
+          totalScans: history.length,
+          flipCount: flips.length,
+          buyCount: buys.length,
+          hitRate,
+          goCount,
+          recent7d: recent.length,
+          totalProfitLow:  Math.round(totalProfitLow),
+          totalProfitHigh: Math.round(totalProfitHigh),
+          totalSaved: Math.round(totalSaved),
+          recentScans: history.slice(0, 6)
+        };
+      })();
+
+      // Greeting based on time of day
+      const greeting = (() => {
+        const h = new Date().getHours();
+        if (h < 12) return { eyebrow: "GOOD MORNING", sub: "Early bird gets the deal. Let's see what dropped overnight." };
+        if (h < 17) return { eyebrow: "GOOD AFTERNOON", sub: "Sellers are active. Good time to lowball someone." };
+        if (h < 21) return { eyebrow: "GOOD EVENING", sub: "Weekend warriors are posting. Let's find the ones worth your time." };
+        return { eyebrow: "WELCOME BACK", sub: "Someone's hunting deals at midnight. Respect." };
+      })();
+
+      // Daily insight rotates based on day of year
+      const insights = [
+        { icon: "💡", title: "Pro tip", body: "Always check title status. A bike with a clean title resells for 30-40% more than salvage." },
+        { icon: "🎯", title: "Hit rate", body: "If your GO rate is over 30%, you're being too generous. Real deals are rare." },
+        { icon: "⚡", title: "Speed wins", body: "Fresh Marketplace listings get the best prices. Set alerts for instant notifications." },
+        { icon: "🔧", title: "Repair math", body: "Always double your repair estimate. You'll find issues you didn't see in the photos." },
+        { icon: "💰", title: "Cash talks", body: "Bringing exact cash + showing up first beats higher offers 9 times out of 10." },
+        { icon: "📅", title: "Best timing", body: "Sunday evenings = sellers tired of weekend tire-kickers. Best negotiation window." },
+        { icon: "🚫", title: "Walk away", body: "If the seller won't share VIN/serial number upfront, walk. No exceptions." },
+      ];
+      const todayInsight = insights[new Date().getDate() % insights.length];
+
+      const f = data ? (data.financials||{}) : {};
+      const v = data ? vc(data.verdict) : "";
+
+      return (
+        <div>
+          {/* TOPBAR */}
+          <div className="topbar">
+            <div className="t-avatar"><img src={AVATAR} alt="kevt" /></div>
+            <div className="t-name">KevTify</div>
+            <div className="t-status"><div className="status-dot" />{clock}</div>
+          </div>
+
+          {/* NOTE MODAL */}
+          {noteModal && (
+            <div className="modal-overlay" onClick={()=>setNoteModal(null)}>
+              <div className="modal-sheet" onClick={e=>e.stopPropagation()}>
+                <div className="modal-title">Add Note</div>
+                <textarea
+                  className="modal-input"
+                  rows={4}
+                  placeholder="e.g. Talked to seller, wants $600 firm. Needs carb rebuild."
+                  value={noteDraft}
+                  onChange={e=>setNoteDraft(e.target.value)}
+                  autoFocus
+                />
+                <div className="modal-row">
+                  <button className="modal-save" onClick={saveNote}>Save</button>
+                  <button className="modal-cancel" onClick={()=>setNoteModal(null)}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── HOME TAB ── */}
+          {tab==="home" && (
+            <div className="main">
+
+              {/* GREETING */}
+              <div className="home-greet">
+                <div className="greet-eyebrow">{greeting.eyebrow}</div>
+                <div className="greet-title">Ready to<br /><span className="accent">find deals?</span></div>
+                <div className="greet-sub">{greeting.sub}</div>
+              </div>
+
+              {/* PRIMARY CTA */}
+              <div className="home-cta" onClick={()=>{setTab("scan"); reset();}}>
+                <div className="home-cta-icon">📸</div>
+                <div className="home-cta-text">
+                  <div className="home-cta-title">Scan a Listing</div>
+                  <div className="home-cta-sub">Upload screenshot · Get instant verdict</div>
+                </div>
+                <div className="home-cta-arrow">→</div>
+              </div>
+
+              {/* MODE QUICK ACTIONS */}
+              <div className="home-secondary">
+                <div className="secondary-btn flip-mode" onClick={()=>{setMode("flip"); setTab("scan"); reset();}}>
+                  <div className="secondary-btn-icon">📈</div>
+                  <div className="secondary-btn-text">
+                    <div className="secondary-btn-label">Flip Mode</div>
+                    <div className="secondary-btn-sub">For profit</div>
+                  </div>
+                </div>
+                <div className="secondary-btn buy-mode" onClick={()=>{setMode("buy"); setTab("scan"); reset();}}>
+                  <div className="secondary-btn-icon">🛒</div>
+                  <div className="secondary-btn-text">
+                    <div className="secondary-btn-label">Buy Mode</div>
+                    <div className="secondary-btn-sub">For yourself</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* STATS */}
+              {stats ? (
+                <>
+                  <div className="stats-section">
+                    <div className="section-label">
+                      <span>Your Stats</span>
+                      <span className="section-link" onClick={()=>setTab("history")}>VIEW ALL →</span>
+                    </div>
+                    <div className="stats-grid">
+                      {/* Hero stat - profit potential or savings */}
+                      <div className="stat-card hero">
+                        <div className="stat-label">{stats.flipCount > stats.buyCount ? "Profit Potential" : "Money Saved"}</div>
+                        {stats.flipCount > stats.buyCount ? (
+                          <>
+                            <div className="stat-value pos">
+                              <span className="stat-value-prefix">$</span>
+                              <AnimatedNumber value={stats.totalProfitLow} duration={900} />
+                              {stats.totalProfitLow !== stats.totalProfitHigh && (
+                                <> – $<AnimatedNumber value={stats.totalProfitHigh} duration={900} /></>
+                              )}
+                            </div>
+                            <div className="stat-sub">From {stats.goCount} GO verdicts in Flip Mode</div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="stat-value pos">
+                              <span className="stat-value-prefix">$</span><AnimatedNumber value={stats.totalSaved} duration={900} />
+                            </div>
+                            <div className="stat-sub">Vs. fair market on Buy Mode wins</div>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-label">Total Scans</div>
+                        <div className="stat-value acc"><AnimatedNumber value={stats.totalScans} duration={700} /></div>
+                        <div className="stat-sub">{stats.recent7d} in past 7 days</div>
+                      </div>
+
+                      <div className="stat-card">
+                        <div className="stat-label">GO Hit Rate</div>
+                        <div className={"stat-value " + (stats.hitRate >= 30 ? "warn" : "pos")}><AnimatedNumber value={stats.hitRate} duration={700} />%</div>
+                        <div className="hit-rate-bar"><div className="hit-rate-fill" style={{width: stats.hitRate + "%"}} /></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RECENT SCANS */}
+                  <div className="stats-section">
+                    <div className="section-label">
+                      <span>Recent Scans</span>
+                      <span className="section-link" onClick={()=>setTab("history")}>SEE ALL →</span>
+                    </div>
+                    <div className="recent-scroll">
+                      {stats.recentScans.map(entry => (
+                        <div key={entry.id} className={"recent-card " + (entry.verdict==="GO"?"go-card":entry.verdict==="MAYBE"?"maybe-card":"nogo-card")} onClick={()=>loadFromHistory(entry)}>
+                          {entry.thumb
+                            ? <img src={entry.thumb} alt="" className="recent-card-img" />
+                            : <div className="recent-card-img-empty">📋</div>}
+                          <div className="recent-card-body">
+                            <div className="recent-card-name">{entry.item}</div>
+                            <div className="recent-card-meta">
+                              <span className={"recent-card-verdict " + (entry.verdict==="GO"?"go":entry.verdict==="MAYBE"?"maybe":"nogo")}>{entry.verdict}</span>
+                              <span className="recent-card-score">{entry.score}/100</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="stats-section">
+                  <div className="section-label"><span>Get Started</span></div>
+                  <div className="recent-empty">
+                    <div className="recent-empty-icon">📊</div>
+                    <div className="recent-empty-text">
+                      Run your first scan to start tracking<br />your deal-finding stats.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* DAILY INSIGHT */}
+              <div className="stats-section">
+                <div className="section-label"><span>Today's Insight</span></div>
+                <div className="insight-card">
+                  <div className="insight-icon">{todayInsight.icon}</div>
+                  <div className="insight-text">
+                    <div className="insight-title">{todayInsight.title}</div>
+                    <div className="insight-body">{todayInsight.body}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ── SCAN TAB ── */}
+          {tab==="scan" && (
+            <div className="main">
+
+              {/* ADD TO HOME SCREEN BANNER */}
+              {showInstall && (
+                <div className="install-banner">
+                  <div className="install-text">
+                    <strong>Install KevTify</strong> — tap the Share button in Safari, then <strong>"Add to Home Screen"</strong> for a native app experience.
+                  </div>
+                  <div className="install-dismiss" onClick={dismissInstall}>✕</div>
+                </div>
+              )}
+
+              <div className="mode-toggle">
+                <button className={"mode-btn"+(mode==="flip"?" active-flip":"")} onClick={()=>{
+                  if (data && images.length) { analyze("flip"); }
+                  else { setMode("flip"); reset(); }
+                }}>📈 Flip Mode</button>
+                <button className={"mode-btn"+(mode==="buy"?" active-buy":"")} onClick={()=>{
+                  if (data && images.length) { analyze("buy"); }
+                  else { setMode("buy"); reset(); }
+                }}>🛒 Buy Mode</button>
+              </div>
+
+              {!apiKey && (
+                <div className="nokey-banner">
+                  <div className="nokey-text">No API key set. Add your Anthropic key to start scanning.</div>
+                  <button className="nokey-btn" onClick={()=>setTab("settings")}>Set Key</button>
+                </div>
+              )}
+
+              {!data && (
+                <div className="card">
+                  <div className="card-hdr">
+                    <div className="hdr-left"><div className="hdr-dot" />Listing Screenshot</div>
+                    <div className="hdr-right">{converting ? "PROCESSING..." : img ? "LOADED" : "STEP 1 OF 2"}</div>
+                  </div>
+                  {images.length === 0 ? (
+                    /* Empty state — no images yet */
+                    <div className="upload-tap" onClick={()=>!converting&&fileRef.current.click()}>
+                      <input ref={fileRef} type="file" accept="image/*" multiple onChange={e=>load(e.target.files)} />
+                      {converting ? (
+                        <>
+                          <div className="up-icon">⏳</div>
+                          <div className="up-label">Processing...</div>
+                          <div className="up-sub">Converting & compressing</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="up-icon">📸</div>
+                          <div className="up-label">Tap to add screenshots</div>
+                          <div className="up-sub">Add up to 5 — price, description, photos</div>
+                          <div className="fmt-row">
+                            {["JPG","PNG","WEBP","HEIC"].map(f=><span key={f} className="fmt-chip">{f}</span>)}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    /* Images loaded — show grid with add more */
+                    <>
+                      <div className="img-grid">
+                        {images.map((im, i) => (
+                          <div key={i} className="img-thumb-wrap">
+                            <img src={im.dataUrl} className="img-thumb" alt="" />
+                            <div className="img-thumb-num">{i+1}</div>
+                            <div className="img-thumb-remove" onClick={()=>setImages(prev=>prev.filter((_,idx)=>idx!==i))}>✕</div>
+                          </div>
+                        ))}
+                        {images.length < 5 && (
+                          <div className="img-add-btn">
+                            <input type="file" accept="image/*" multiple onChange={e=>load(e.target.files)} />
+                            <span>+</span>
+                            <span className="img-add-label">Add more</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="img-grid-footer">
+                        <span>{images.length} of 5 screenshots · tap ✕ to remove</span>
+                        <span className="img-count-pill">{converting ? "Processing..." : "READY"}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {img && !data && (
+                <div className="context-wrap">
+                  <textarea
+                    className="context-input"
+                    rows={2}
+                    placeholder="Optional context — e.g. seller said $800 firm, needs tires"
+                    value={ctx}
+                    maxLength={CTX_MAX}
+                    onChange={e=>setCtx(e.target.value)}
+                    onFocus={e=>setTimeout(()=>e.target.scrollIntoView({behavior:"smooth",block:"nearest"}),300)}
+                  />
+                  <div className={"context-count"+(ctx.length>CTX_MAX*0.85?" warn":"")}>{ctx.length}/{CTX_MAX}</div>
+                </div>
+              )}
+
+              {img && !data && (
+                <button
+                  className={"analyze-btn "+(mode==="flip"?"flip-btn":"buy-btn")}
+                  onClick={analyze}
+                  disabled={busy||converting||images.length===0}
+                  ref={analyzeRef}
+                >
+                  {busy ? "Analyzing..." : (mode==="flip" ? "Analyze Flip →" : "Analyze Buy →")}
+                </button>
+              )}
+
+              {busy && (() => {
+                const phases = [
+                  { lbl: "Preparing request", cur: 0 },
+                  { lbl: "Claude analyzing image", cur: 1 },
+                  { lbl: "Parsing results", cur: 2 }
+                ];
+                const currentLbl = phases[Math.min(phase, phases.length - 1)]?.lbl || "Processing";
+                return (
+                  <div className="loading-card">
+                    <div className="loading-track"><div className="loading-fill" /></div>
+                    <div className="loading-lbl">{currentLbl}</div>
+                    {ctx && <div className="loading-ctx">Context: {ctx}</div>}
+                    <div className="phase-list">
+                      {phases.map((p, i) => {
+                        const status = phase > i ? "done" : phase === i ? "active" : "pending";
+                        return (
+                          <div key={i} className={"phase-item " + status}>
+                            <div className="phase-icon">{status === "pending" ? (i+1) : ""}</div>
+                            <div>{p.lbl}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {err && (
+                <div className="err-card">
+                  <div className="err-msg">⚠ {err}</div>
+                  <button className="retry-btn" onClick={analyze}>Retry</button>
+                </div>
+              )}
+
+              {data && (
+                <div className="results">
+
+                  {images.length > 0 && (
+                    <div className="result-thumb">
+                      <img src={images[0].dataUrl} alt="listing" />
+                      <div className="result-thumb-info">
+                        <div className="result-thumb-item">{data.item||"Analyzed Listing"}</div>
+                        <div className="result-thumb-mode">{mode==="flip"?"📈 Flip Mode":"🛒 Buy Mode"}</div>
+                      </div>
+                      <div className="rescan-btn" onClick={()=>setData(null)}>Re-scan</div>
+                    </div>
+                  )}
+
+                  <div className={"verdict-card "+v}>
+                    <div className="verdict-top">
+                      <div className="score-col">
+                        <div className="score-big"><AnimatedNumber value={data.score} duration={1200} /></div>
+                        <div className="score-denom">/ 100</div>
+                        {(() => {
+                          const p = calcPercentile(data.score, history, mode);
+                          if (!p) return null;
+                          const pillCls = p.pct >= 70 ? "top" : p.pct >= 40 ? "mid" : "low";
+                          return (
+                            <div className="score-percentile">
+                              <span className={"percentile-pill " + pillCls}>TOP {100-p.pct}%</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div className="badge-col">
+                        <div className="badge-word">{data.verdict}</div>
+                        <div className="badge-sub">
+                          {mode==="flip"
+                            ? (data.verdict==="GO"?"Strong Flip":data.verdict==="MAYBE"?"Thin Margins":"Pass On It")
+                            : (data.verdict==="GO"?"Great Price":data.verdict==="MAYBE"?"Negotiate Hard":"Overpriced")}
+                        </div>
+                      </div>
+                      <div className="offer-col">
+                        <div className="offer-lbl">Open At</div>
+                        <div className="offer-val">{data.opening_offer != null ? <AnimatedDollar value={data.opening_offer} duration={1100} /> : "—"}</div>
+                        <div className="offer-ask">Ask: {fmt(data.asking_price)}</div>
+                      </div>
+                    </div>
+                    <div className="summary-row">
+                      <div className="summary-txt">{data.summary}</div>
+                    </div>
+                  </div>
+
+                  {/* PRICE GAUGE — visual: where asking price falls in the value range */}
+                  <PriceGauge
+                    asking={data.asking_price}
+                    lo={mode==="flip" ? f.estimated_resale_low : f.fair_market_low}
+                    hi={mode==="flip" ? f.estimated_resale_high : f.fair_market_high}
+                    mode={mode}
+                  />
+
+                  {/* PROFIT WATERFALL — visual: cost breakdown leading to profit/savings */}
+                  <Waterfall data={data} mode={mode} />
+
+                  {/* COLLAPSIBLE RAW NUMBERS */}
+                  <div>
+                    <button className={"raw-toggle" + (showRaw ? " open" : "")} onClick={()=>setShowRaw(!showRaw)}>
+                      <span>{showRaw ? "Hide" : "Show"} Raw Numbers</span>
+                      <span className={"raw-arrow" + (showRaw ? " open" : "")}>▾</span>
+                    </button>
+                    {showRaw && (
+                      <div className="raw-content">
+                        <div className="math-grid">
+                          {mode==="flip" ? (
+                            <>
+                              <div className="math-cell"><div className="math-lbl">Repair Est.</div><div className="math-val warn">{fmt(f.estimated_repair_cost_low)}</div><div className="math-range">– {fmt(f.estimated_repair_cost_high)}</div></div>
+                              <div className="math-cell"><div className="math-lbl">Resale Est.</div><div className="math-val">{fmt(f.estimated_resale_low)}</div><div className="math-range">– {fmt(f.estimated_resale_high)}</div></div>
+                              <div className="math-cell"><div className="math-lbl">Flip Profit</div><div className={"math-val "+pc(f.estimated_profit_low,f.estimated_profit_high)}>{fmt(f.estimated_profit_low)}</div><div className="math-range">– {fmt(f.estimated_profit_high)}</div></div>
+                              <div className="math-cell"><div className="math-lbl">Asking</div><div className="math-val">{fmt(data.asking_price)}</div><div className="math-range">listed</div></div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="math-cell"><div className="math-lbl">Fair Market</div><div className="math-val">{fmt(f.fair_market_low)}</div><div className="math-range">– {fmt(f.fair_market_high)}</div></div>
+                              <div className="math-cell"><div className="math-lbl">Asking Price</div><div className="math-val">{fmt(data.asking_price)}</div><div className="math-range">listed</div></div>
+                              <div className="math-cell">
+                                <div className="math-lbl">vs Market</div>
+                                <div className={"math-val "+(f.overprice_underprice<0?"pos":f.overprice_underprice>0?"neg":"warn")}>
+                                  {f.overprice_underprice!=null?(f.overprice_underprice>0?"+":"")+("$"+Math.abs(Number(f.overprice_underprice)).toLocaleString()):"—"}
+                                </div>
+                                <div className="math-range">{f.overprice_underprice<0?"under market":f.overprice_underprice>0?"over market":"at market"}</div>
+                              </div>
+                              <div className="math-cell"><div className="math-lbl">All-In Est.</div><div className="math-val warn">{fmt(f.total_cost_low)}</div><div className="math-range">w/ repairs</div></div>
+                            </>
+                          )}
+                          {f.notes && <div className="math-note">Note: {f.notes}</div>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {data.flags?.length>0 && (
+                    <div className="card" style={{marginBottom:0}}>
+                      <div className="card-hdr">
+                        <div className="hdr-left"><div className="hdr-dot" />Signal Analysis</div>
+                        <div className="hdr-right">{data.flags.length} FLAGS</div>
+                      </div>
+                      {data.flags.map((fl,i)=>(
+                        <div key={i} className={"flag-row "+fl.severity}>
+                          <div className="flag-sev"><div className="sev-dot" />{fl.severity}</div>
+                          <div className="flag-txt">{fl.text}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {data.negotiation_lines?.length>0 && (
+                    <div className="card" style={{marginBottom:0}}>
+                      <div className="card-hdr">
+                        <div className="hdr-left"><div className="hdr-dot" />Negotiation Script</div>
+                        <div className="hdr-right">READY TO SEND</div>
+                      </div>
+                      {data.negotiation_lines.map((line,i)=>(
+                        <div key={i} className={"neg-row" + (copiedLine === i ? " copied" : "")} onClick={()=>{
+                          navigator.clipboard.writeText(line);
+                          setCopiedLine(i);
+                          if (navigator.vibrate) navigator.vibrate(20);
+                          setTimeout(()=>setCopiedLine(-1), 1500);
+                        }}>
+                          <div className="neg-n">{String(i+1).padStart(2,"0")}</div>
+                          <div className="neg-t">{line}</div>
+                          <div className="copy-hint">{copiedLine === i ? "✓ COPIED" : "TAP TO COPY"}</div>
+                        </div>
+                      ))}
+                      <div className="copy-row">
+                        <button className={"copy-btn"+(copied?" done":"")} onClick={copy}>{copied?"✓ Copied":"Copy Lines"}</button>
+                        <button className="share-btn" onClick={share}>Share Analysis</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button className="reset-btn" onClick={reset}>↩ Scan New Listing</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── HISTORY TAB ── */}
+          {tab==="history" && (
+            <div className="main">
+              <div className="card" style={{marginBottom:0}}>
+                <div className="card-hdr">
+                  <div className="hdr-left"><div className="hdr-dot" />Scan History</div>
+                  <div className="hdr-right">{filteredHistory.length} of {history.length}</div>
+                </div>
+
+                {history.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-icon">📋</div>
+                    <div className="empty-title">No Scans Yet</div>
+                    <div className="empty-hint">Analyze any marketplace listing and it'll save here automatically. Tap any past scan to revisit it.</div>
+                    <button className="empty-cta" onClick={()=>setTab("scan")}>Run Your First Scan</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="hist-controls">
+                      <input
+                        className="hist-search"
+                        placeholder="Search items..."
+                        value={histSearch}
+                        onChange={e=>setHistSearch(e.target.value)}
+                      />
+                      {[
+                        {id:"all", lbl:"All"},
+                        {id:"go", lbl:"GO"},
+                        {id:"maybe", lbl:"MAYBE"},
+                        {id:"nogo", lbl:"NO-GO"},
+                        {id:"flip", lbl:"Flip"},
+                        {id:"buy", lbl:"Buy"},
+                      ].map(filt => (
+                        <div
+                          key={filt.id}
+                          className={"hist-filter-pill" + (histFilter === filt.id ? " active" : "")}
+                          onClick={()=>setHistFilter(filt.id)}
+                        >{filt.lbl}</div>
+                      ))}
+                    </div>
+
+                    {filteredHistory.length === 0 ? (
+                      <div className="empty-state">
+                        <div className="empty-icon" style={{fontSize:36}}>🔍</div>
+                        <div className="empty-title" style={{fontSize:15}}>No Matches</div>
+                        <div className="empty-hint">Try a different search term or filter</div>
+                      </div>
+                    ) : filteredHistory.map(entry => (
+                      <div key={entry.id} className="hist-item-wrap">
+                        <div className="hist-delete-bg" onClick={()=>deleteHistoryItem(entry.id)}>Delete</div>
+                        <div
+                          className={"hist-item-swipe" + (swipedId === entry.id ? " swiped" : "")}
+                          onTouchStart={e => onSwipeStart(entry.id, e)}
+                          onTouchEnd={e => onSwipeEnd(entry.id, e)}
+                          onClick={() => {
+                            if (swipedId === entry.id) { setSwipedId(null); return; }
+                            loadFromHistory(entry);
+                          }}
+                        >
+                          <div className="hist-item">
+                            {entry.thumb ? <img className="hist-thumb" src={entry.thumb} alt="" /> : <div className="hist-thumb" />}
+                            <div className="hist-info">
+                              <div className="hist-item-name">{entry.item}</div>
+                              <div className="hist-meta">{entry.ts} · {entry.mode==="flip"?"📈 Flip":"🛒 Buy"} · Ask: {fmt(entry.asking_price)}</div>
+                              {entry.note ? <div className="hist-note">📝 {entry.note}</div> : null}
+                            </div>
+                            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
+                              <div className={"hist-badge "+(entry.verdict==="GO"?"go":entry.verdict==="MAYBE"?"maybe":"nogo")}>{entry.verdict}</div>
+                              <div className="hist-score">{entry.score}/100</div>
+                              <div style={{fontFamily:"var(--mono)",fontSize:"9px",color:"var(--txt3)",cursor:"pointer",marginTop:2,padding:"2px 6px",background:"var(--s3)",borderRadius:4}} onClick={e=>{e.stopPropagation();openNote(entry);}}>NOTE</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="hist-warn">⚠ Swipe left on any item to delete · History is stored on this device only</div>
+                    <button className="hist-clear" onClick={clearHistory}>Clear All History</button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── SETTINGS TAB ── */}
+          {tab==="settings" && (
+            <div className="main">
+              <div className="settings-section">
+                <div className="settings-label">API Key Status</div>
+                <div className="settings-row">
+                  <div><div className="settings-row-label">Anthropic API Key</div><div className="settings-row-sub">Required to run analysis</div></div>
+                  <div className={"key-status "+(apiKey?"set":"unset")}>{apiKey?"SET":"NOT SET"}</div>
+                </div>
+              </div>
+              <div className="settings-section">
+                <div className="settings-label">Enter API Key</div>
+                <input className="api-input" type="password" placeholder="sk-ant-..." value={keyDraft} onChange={e=>setKeyDraft(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" />
+                <button className={"save-btn"+(keySaved?" saved":"")} onClick={saveKey}>{keySaved?"✓ Saved":"Save Key"}</button>
+                <div className="settings-hint">Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br />Stored on this device only. Sent directly to Anthropic — nowhere else.</div>
+              </div>
+              <div className="settings-section">
+                <div className="settings-label">Install App</div>
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">Add to Home Screen</div>
+                    <div className="settings-row-sub">Safari → Share → Add to Home Screen</div>
+                  </div>
+                  <div style={{fontSize:20}}>📲</div>
+                </div>
+              </div>
+              <div className="settings-section">
+                <div className="settings-label">About</div>
+                <div className="settings-row">
+                  <div><div className="settings-row-label">KevTify</div><div className="settings-row-sub">Marketplace deal analyzer</div></div>
+                  <div style={{fontFamily:"var(--mono)",fontSize:"10px",color:"var(--txt3)"}}>v1.1</div>
+                </div>
+                <div className="settings-row">
+                  <div><div className="settings-row-label">Scan History</div><div className="settings-row-sub">{history.length} scans stored locally</div></div>
+                  <div style={{fontFamily:"var(--mono)",fontSize:"11px",color:"var(--ng)",cursor:"pointer"}} onClick={clearHistory}>CLEAR</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BOTTOM NAV */}
+          <div className="bottom-nav">
+            <div className={"nav-item"+(tab==="home"?" active":"")} onClick={()=>setTab("home")}><div className="nav-icon">🏠</div><div className="nav-lbl">Home</div></div>
+            <div className={"nav-item"+(tab==="scan"?" active":"")} onClick={()=>setTab("scan")}><div className="nav-icon">🔍</div><div className="nav-lbl">Scan</div></div>
+            <div className={"nav-item"+(tab==="history"?" active":"")} onClick={()=>setTab("history")}><div className="nav-icon">📋</div><div className="nav-lbl">History</div></div>
+            <div className={"nav-item"+(tab==="settings"?" active":"")} onClick={()=>setTab("settings")}><div className="nav-icon">⚙️</div><div className="nav-lbl">Settings</div></div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+
+</body>
+</html>
